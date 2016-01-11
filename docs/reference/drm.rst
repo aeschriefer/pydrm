@@ -1,5 +1,0 @@
-drm
-===
-
-.. automodule:: drm
-    :members:

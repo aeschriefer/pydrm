@@ -1,67 +1,57 @@
-========
-Overview
-========
+|Build Status|
 
-.. start-badges
+PYDRM
+=====
 
-.. list-table::
-    :stub-columns: 1
-
-    * - docs
-      - |docs|
-    * - tests
-      - |
-        |
-        |
-    * - package
-      - |version| |downloads| |wheel| |supported-versions| |supported-implementations|
-
-.. |docs| image:: https://readthedocs.org/projects/pydrm/badge/?style=flat
-    :target: https://readthedocs.org/projects/pydrm
-    :alt: Documentation Status
-
-.. |version| image:: https://img.shields.io/pypi/v/pydrm.svg?style=flat
-    :alt: PyPI Package latest release
-    :target: https://pypi.python.org/pypi/pydrm
-
-.. |downloads| image:: https://img.shields.io/pypi/dm/pydrm.svg?style=flat
-    :alt: PyPI Package monthly downloads
-    :target: https://pypi.python.org/pypi/pydrm
-
-.. |wheel| image:: https://img.shields.io/pypi/wheel/pydrm.svg?style=flat
-    :alt: PyPI Wheel
-    :target: https://pypi.python.org/pypi/pydrm
-
-.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/pydrm.svg?style=flat
-    :alt: Supported versions
-    :target: https://pypi.python.org/pypi/pydrm
-
-.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/pydrm.svg?style=flat
-    :alt: Supported implementations
-    :target: https://pypi.python.org/pypi/pydrm
-
-
-.. end-badges
-
-A python library to submit jobs to distributed resource management systems
+A pure python library to submit jobs to distributed resource management systems. Currently there is support for Sun Grid Engine, PBS/Torque, and slurm. 
 
 * Free software: BSD license
+
+Requirements
+===========
+
+- Python 2.7
+- sh
+- path.py
+
 
 Installation
 ============
 
-::
+Using PIP via Github
 
-    pip install pydrm
+.. code:: bash
 
-Documentation
-=============
+    pip install git+git://github.com/aeschriefer/pydrm.git
 
-https://pydrm.readthedocs.org/
+Manually via GIT
+
+.. code:: bash
+	  git clone git://github.com/aeschriefer/pydrm.git pydrm
+	  cd pydrm
+	  python setup.py install
+
+Usage
+=====
+
+.. code:: python
+
+	  >>> from drm import get_drm_module
+	  >>> drm_module = get_drm_module()
+	  >>> submitter = drm_module.Submitter(log='logs/', script='jobs/')
+	  >>> resource = drm_module.Resource()
+	  >>> kwargs = {'name': 'job', 'hold': ['prev_job'], 'copyEnv': True, 'shell': '/bin/bash'}
+	  >>> submitter.submit_job(my_bash_string,
+	                           resource=resource.build(memInGB=5, workers=4),
+                                   **kwargs
+                                  )
+	  
+pydrm only submits jobs, it does not do any monitoring of running or queued jobs.
+
 
 Development
 ===========
 
 To run the all tests run::
 
-    tox
+    py.test tests/
