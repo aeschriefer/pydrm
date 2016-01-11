@@ -18,4 +18,3 @@ def get_drm_module():
     else:
         from . import bash
         return bash
-    

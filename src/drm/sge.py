@@ -4,10 +4,10 @@ import math
 from datetime import timedelta
 
 from . import base
-
 '''
 This module is specifically for the cgs, not for sge in general
 '''
+
 
 class Resource(base.BaseResource):
     drm_flag = '#$'
@@ -29,13 +29,13 @@ class Resource(base.BaseResource):
             self.format_concurrent(workers),
             self.format_memory(memInGB),
             self.format_timedelta(time),
-            ]
-            
+        ]
+
         return self.make_header(items)
 
 
 class Submitter(base.BaseSubmitter):
-    
+
     drm_flag = '#?'
 
     def format_hold(self, jid_list):
@@ -58,4 +58,3 @@ class Submitter(base.BaseSubmitter):
 
     def get_jobid_from_submit(self, stdout):
         return re.search(r'\d+', stdout).group(0)
-
