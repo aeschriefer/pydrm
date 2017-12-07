@@ -1,6 +1,3 @@
-__version__ = '0.1.0'
-
-
 def get_drm_module():
     from distutils.spawn import find_executable
     if find_executable('pbsnodes'):
@@ -18,3 +15,4 @@ def get_drm_module():
     else:
         from . import bash
         return bash
+    

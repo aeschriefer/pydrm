@@ -1,60 +1,91 @@
+from past.utils import old_div
 import os.path
+import os
 import re
-import math
-from datetime import timedelta
 
-from . import base
-'''
-This module is specifically for the cgs, not for sge in general
-'''
+import attr
+
+import drm.base as base
+
+PE_NAME = os.environ.get('DRM_SGE_PE', 'smp')
 
 
-class Resource(base.BaseResource):
-    drm_flag = '#$'
+@base.none_guard_filters
+def make_environment(template_dict):
+    def format_timedelta(time):
+        hours = time.days * 24 + old_div(time.seconds, 3600)
+        minutes = time.seconds % 3600 / 60
+        return '{0:02.0f}:{1:02.0f}:00'.format(hours, minutes)
 
-    def format_timedelta(self, time):
-        if time > timedelta(minutes=59):
-            return '-P long'
-        else:
+    def format_parallel(workers):
+        if workers <= 1:
             return None
+        else:
+            return '{} {}'.format(PE_NAME, workers)
 
-    def format_memory(self, memInGB):
-        return '-l h_vmem={0:.0f}gb'.format(math.ceil(memInGB))
+    def format_memory(memInGB, workers):
+        mem = memInGB / float(max(1, workers))
+        return '{:.2f}'.format(max(mem, 0.01))
 
-    def format_concurrent(self, workers):
-        return '-pe shared {workers}'.format(workers=workers)
-
-    def build(self, time=timedelta(minutes=59), workers=1, memInGB=1, **kwargs):
-        items = [
-            self.format_concurrent(workers),
-            self.format_memory(memInGB),
-            self.format_timedelta(time),
-        ]
-
-        return self.make_header(items)
+    env = base.make_jinja_env(template_dict)
+    env.filters['format_jid_list'] = lambda x: ','.join(x)
+    env.filters['format_memory'] = format_memory
+    env.filters['format_timedelta'] = format_timedelta
+    env.filters['format_parallel'] = format_parallel
+    return env
 
 
-class Submitter(base.BaseSubmitter):
+template_dict = {}
 
-    drm_flag = '#?'
+template_dict['resource'] = '''\
+#$ -l h_rt={{ time|format_timedelta }},\
+h_vmem={{ memInGB|format_memory }}G,mem_free={{ memInGB|format_memory }}G
+#$ -pe {{ workers|format_parallel(workers) }}
+{{ constraint }}
+'''
 
-    def format_hold(self, jid_list):
-        return '-hold_jid' + ','.join(map(str, jid_list))
+template_dict['job'] = '''#!{{ shell }}
+#$ -wd {{ workDir }}
+#$ -V
+#$ -S {{ shell }}
+#$ -o {{ logDir }}
+#$ -e {{ logDir }}
+#$ -N {{ name }}
+#$ -hold_jid {{ jid_list|format_jid_list }}
 
-    def format_copyEnv(self):
-        return '-V'
+{{ resource }}
 
-    def format_env(self, env):
-        return '-v ' + ','.join('='.join(e) for e in env.iteritems())
+{{ job }}
+'''
 
-    def format_workDir(self, workDir):
-        return '-wd %s' % os.path.abspath(workDir)
+_ENV = make_environment(template_dict)
 
-    def format_logDir(self, logDir):
-        return ['%s %s' % (x, logDir) for x in ['-e', '-o']]
 
-    def format_name(self, name):
-        return '-N %s' % name
+def remove_lines_ending_in_none(_str):
+    lines = _str.split(os.linesep)
+    return os.linesep.join(e for e in lines if not re.search(r'None\s*$', e))
+
+
+class Constraint(base.Constraint):
+    def __str__(self):
+        return '{}'.format(self.features)
+
+
+class Resource(base.Resource):
+    _template = _ENV.get_template('resource')
+
+    def __str__(self):
+        return remove_lines_ending_in_none(
+            self._template.render(**attr.asdict(self, recurse=False)))
+
+
+class Submitter(base.Submitter):
+    template = _ENV.get_template('job')
+    submit_cmd = 'qsub'
 
     def get_jobid_from_submit(self, stdout):
-        return re.search(r'\d+', stdout).group(0)
+        m = re.search(r'\d+', stdout)
+        if m is None:
+            return None
+        else:
+            return m.group(0)

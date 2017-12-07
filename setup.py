@@ -17,19 +17,19 @@ from setuptools import setup
 def read(*names, **kwargs):
     return io.open(
         join(dirname(__file__), *names),
-        encoding=kwargs.get('encoding', 'utf8')
-    ).read()
+        encoding=kwargs.get('encoding', 'utf8')).read()
 
 
 setup(
     name='pydrm',
-    version='0.1.0',
+    version='1.0',
     license='BSD',
-    description='A python library to submit jobs to distributed resource management systems',
-    long_description='%s\n%s' % (
-        re.compile('^.. start-badges.*^.. end-badges', re.M | re.S).sub('', read('README.rst')),
-        re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))
-    ),
+    description=
+    'A python library to submit jobs to distributed resource management systems',
+    long_description='%s\n%s' %
+    (re.compile('^.. start-badges.*^.. end-badges', re.M
+                | re.S).sub('', read('README.rst')),
+     re.sub(':[a-z]+:`~?(.*?)`', r'``\1``', read('CHANGELOG.rst'))),
     author='Andrew Schriefer',
     author_email='ae.schriefer123@gmail.com',
     url='https://github.com/aeschriefer/pydrm',
@@ -54,7 +54,4 @@ setup(
     keywords=[
         # eg: 'keyword1', 'keyword2', 'keyword3',
     ],
-    install_requires=[
-        'sh', 'path.py'
-    ],
-)
+    install_requires=['sh', 'path.py', 'jinja2', 'attrs', 'future'], )

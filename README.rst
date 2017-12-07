@@ -39,10 +39,11 @@ Usage
 	  >>> from drm import get_drm_module
 	  >>> drm_module = get_drm_module()
 	  >>> submitter = drm_module.Submitter(log='logs/', script='jobs/')
-	  >>> resource = drm_module.Resource()
-	  >>> kwargs = {'name': 'job', 'hold': ['prev_job'], 'copyEnv': True, 'shell': '/bin/bash'}
-	  >>> submitter.submit_job(my_bash_string,
-	                           resource=resource.build(memInGB=5, workers=4),
+	  >>> resource = drm_module.Resource(memInGB=5, workers=4)
+	  >>> kwargs = {'name': 'job', 'hold': ['prev_job']}
+	  >>> bash_string = 'sleep 1 && echo "done!"'
+	  >>> submitter.submit_job(bash_string,
+	                           resource=resource,
                                    **kwargs
                                   )
 	  
